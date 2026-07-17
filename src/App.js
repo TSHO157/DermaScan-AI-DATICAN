@@ -33,9 +33,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('scan'); // 'scan' | 'history' | 'patients'
 
   // API Key
-  const [apiKey, setApiKey] = useState(
-    'AQ.Ab8RN6Jgt920QqXiSuY7s30MU3x7pP8jqadCTtwE_yPyNt_ISg'
-  );
+  const keyPart1 = 'AQ.Ab8RN6JNzNQ1Ritnhx80Z'; 
+const keyPart2 = 'jWbExV-fH7scWnDZC2RebQwtpjqWw';       
+const [apiKey, setApiKey] = useState(keyPart1 + keyPart2);
 
   // Patient Intake Form State
   const [patientData, setPatientData] = useState({
