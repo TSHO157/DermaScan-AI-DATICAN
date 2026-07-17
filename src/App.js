@@ -1,8 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Upload, ShieldAlert, UserCheck, Activity, History, Users, AlertTriangle, CheckCircle, Clock, User, FileText, Sparkles, Trash2, ArrowRight } from 'lucide-react';
+import {
+  Camera,
+  Upload,
+  ShieldAlert,
+  UserCheck,
+  Activity,
+  History,
+  Users,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  User,
+  FileText,
+  Sparkles,
+  Trash2,
+  ArrowRight,
+} from 'lucide-react';
 
 export default function App() {
-  // 1. Automatically inject Tailwind CSS CDN (Yesterday's proven method!)
+  //
   useEffect(() => {
     if (!document.getElementById('tailwind-cdn')) {
       const script = document.createElement('script');
@@ -15,17 +31,19 @@ export default function App() {
   // Application State
   const [role, setRole] = useState('Consumer'); // 'Consumer' | 'Clinician'
   const [activeTab, setActiveTab] = useState('scan'); // 'scan' | 'history' | 'patients'
-  
-  // ⚠️ PASTE YOUR REAL GEMINI API KEY INSIDE THESE QUOTES:
-  const [apiKey, setApiKey] = useState('AQ.Ab8RN6I9O8zSpB5hdDK8EKcpZQLp_TD7F4MsmhtL8HQf03BVpQ'); 
-  
+
+  // API Key
+  const [apiKey, setApiKey] = useState(
+    'AQ.Ab8RN6KsM-G1uU0rqT13Ux7itqkF9FawWYHqBawknIDJDZvkzQ'
+  );
+
   // Patient Intake Form State
   const [patientData, setPatientData] = useState({
     name: '',
     age: '',
     skinType: 'Type III - Medium white to olive',
     symptoms: '',
-    notes: ''
+    notes: '',
   });
 
   // Scan & AI State
@@ -41,7 +59,7 @@ export default function App() {
   // Handle Patient Intake Form inputs
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setPatientData(prev => ({ ...prev, [name]: value }));
+    setPatientData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handle Image Upload
@@ -58,12 +76,14 @@ export default function App() {
     }
   };
 
-  // 🚀 THE REAL AI VISION ENGINE (GEMINI 3 FLASH PREVIEW)
+  //  REAL AI VISION ENGINE (GEMINI 3 FLASH PREVIEW)
   const runAiAnalysis = async () => {
     if (!imagePreview) return;
-    
+
     if (!patientData.name.trim()) {
-      alert("Please enter a Patient Name or 'Self' in the Intake Form before running the scan.");
+      alert(
+        "Please enter a Patient Name or 'Self' in the Intake Form before running the scan."
+      );
       return;
     }
 
@@ -75,10 +95,15 @@ export default function App() {
       try {
         setAiModeUsed('LIVE GEMINI VISION AI');
         const base64Data = imagePreview.split(',')[1];
-        const mimeType = imagePreview.split(';')[0].split(':')[1] || 'image/jpeg';
+        const mimeType =
+          imagePreview.split(';')[0].split(':')[1] || 'image/jpeg';
 
         const systemPrompt = `You are an AI-powered clinical dermatology assistant. Carefully examine the skin image provided. 
-        Patient Profile: Name: ${patientData.name}, Age: ${patientData.age || 'N/A'}, Skin Type: ${patientData.skinType}, Reported Symptoms: "${patientData.symptoms || 'None reported'}".
+        Patient Profile: Name: ${patientData.name}, Age: ${
+          patientData.age || 'N/A'
+        }, Skin Type: ${patientData.skinType}, Reported Symptoms: "${
+          patientData.symptoms || 'None reported'
+        }".
 
         Consider and differentiate between these conditions:
         1. Normal / Healthy Skin (if no visible lesion, rash, or abnormality is present)
@@ -106,22 +131,27 @@ export default function App() {
           "urgencyLabel": "Short urgency advice string (e.g., Manage at Home / See a GP / Urgent Dermatologist Referral)"
         }`;
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey.trim()}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: systemPrompt },
-                { inline_data: { mime_type: mimeType, data: base64Data } }
-              ]
-            }],
-            generationConfig: { 
-              response_mime_type: "application/json",
-              temperature: 0.2
-            }
-          })
-        });
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey.trim()}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: systemPrompt },
+                    { inline_data: { mime_type: mimeType, data: base64Data } },
+                  ],
+                },
+              ],
+              generationConfig: {
+                response_mime_type: 'application/json',
+                temperature: 0.2,
+              },
+            }),
+          }
+        );
 
         const data = await response.json();
         if (data.error) throw new Error(data.error.message);
@@ -134,7 +164,11 @@ export default function App() {
 
         const newRecord = {
           id: Date.now(),
-          date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+          date: new Date().toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          }),
           patientName: patientData.name,
           age: patientData.age || 'N/A',
           skinType: patientData.skinType,
@@ -143,14 +177,15 @@ export default function App() {
           confidence: liveResult.confidence,
           urgency: liveResult.urgency,
           urgencyLabel: liveResult.urgencyLabel,
-          clinicalDesc: liveResult.description_clinical
+          clinicalDesc: liveResult.description_clinical,
         };
-        setScanHistory(prev => [newRecord, ...prev]);
+        setScanHistory((prev) => [newRecord, ...prev]);
         return;
-
       } catch (error) {
-        console.error("Live API Error:", error);
-        alert(`Live API Notice: ${error.message}\n\nSwitching to high-fidelity clinical simulation for seamless demo.`);
+        console.error('Live API Error:', error);
+        alert(
+          `Live API Notice: ${error.message}\n\nSwitching to high-fidelity clinical simulation for seamless demo.`
+        );
       }
     }
 
@@ -159,52 +194,65 @@ export default function App() {
     setTimeout(() => {
       const conditionsList = [
         {
-          condition: "Normal / Healthy Skin",
+          condition: 'Normal / Healthy Skin',
           confidence: 96,
-          urgency: "Green",
-          urgencyLabel: "No Medical Intervention Required",
-          description_consumer: "The scanned epidermal surface appears smooth, intact, and well-hydrated. No visible rashes, discoloration, irregular moles, or inflammatory lesions were detected.",
-          description_clinical: "Epidermis demonstrates normal surface topography and uniform pigmentation without evidence of erythema, scaling, papules, or suspicious melanocytic nevi. Fitzpatrick type consistent with intake.",
+          urgency: 'Green',
+          urgencyLabel: 'No Medical Intervention Required',
+          description_consumer:
+            'The scanned epidermal surface appears smooth, intact, and well-hydrated. No visible rashes, discoloration, irregular moles, or inflammatory lesions were detected.',
+          description_clinical:
+            'Epidermis demonstrates normal surface topography and uniform pigmentation without evidence of erythema, scaling, papules, or suspicious melanocytic nevi. Fitzpatrick type consistent with intake.',
           recommendations: [
-            "Continue daily routine of gentle cleansing and moisturizing.",
-            "Apply broad-spectrum SPF 30+ sunscreen daily to prevent photoaging and UV damage.",
-            "Perform self-examinations monthly to monitor for any new or changing pigmented lesions."
-          ]
+            'Continue daily routine of gentle cleansing and moisturizing.',
+            'Apply broad-spectrum SPF 30+ sunscreen daily to prevent photoaging and UV damage.',
+            'Perform self-examinations monthly to monitor for any new or changing pigmented lesions.',
+          ],
         },
         {
-          condition: "Acne (Inflammatory & Cystic)",
+          condition: 'Acne (Inflammatory & Cystic)',
           confidence: 91,
-          urgency: "Yellow",
-          urgencyLabel: "Monitor at Home / See a GP if scarring occurs",
-          description_consumer: "Noticeable red, inflamed bumps and deeper nodules. This occurs when hair follicles become plugged with oil and dead skin cells, triggering inflammation.",
-          description_clinical: "Multiple erythematous papules and deep-seated nodulocystic lesions observed across the facial epidermis. Signs of localized follicular hyperkeratosis and sebum overproduction.",
+          urgency: 'Yellow',
+          urgencyLabel: 'Monitor at Home / See a GP if scarring occurs',
+          description_consumer:
+            'Noticeable red, inflamed bumps and deeper nodules. This occurs when hair follicles become plugged with oil and dead skin cells, triggering inflammation.',
+          description_clinical:
+            'Multiple erythematous papules and deep-seated nodulocystic lesions observed across the facial epidermis. Signs of localized follicular hyperkeratosis and sebum overproduction.',
           recommendations: [
-            "Apply an over-the-counter cleanser containing 2% Salicylic Acid or 5% Benzoyl Peroxide daily.",
-            "Avoid physically popping cystic lesions to prevent permanent dermal scarring.",
-            "Use non-comedogenic, oil-free moisturizers and daily SPF 30+ sunscreen."
-          ]
+            'Apply an over-the-counter cleanser containing 2% Salicylic Acid or 5% Benzoyl Peroxide daily.',
+            'Avoid physically popping cystic lesions to prevent permanent dermal scarring.',
+            'Use non-comedogenic, oil-free moisturizers and daily SPF 30+ sunscreen.',
+          ],
         },
         {
-          condition: "Allergic Contact Dermatitis",
+          condition: 'Allergic Contact Dermatitis',
           confidence: 88,
-          urgency: "Green",
-          urgencyLabel: "Manage at Home with OTC Care",
-          description_consumer: "An itchy, red rash triggered by direct contact with a substance (such as new soaps, jewelry, or plant oils). It typically resolves once the trigger is removed.",
-          description_clinical: "Acute eczematous reaction characterized by localized erythema, mild edema, and micro-vesiculation corresponding to areas of external allergen or irritant contact.",
+          urgency: 'Green',
+          urgencyLabel: 'Manage at Home with OTC Care',
+          description_consumer:
+            'An itchy, red rash triggered by direct contact with a substance (such as new soaps, jewelry, or plant oils). It typically resolves once the trigger is removed.',
+          description_clinical:
+            'Acute eczematous reaction characterized by localized erythema, mild edema, and micro-vesiculation corresponding to areas of external allergen or irritant contact.',
           recommendations: [
-            "Immediately discontinue use of new skincare products, detergents, or metallic jewelry in the area.",
-            "Apply over-the-counter 1% hydrocortisone cream and cool compresses to soothe inflammation.",
-            "Take an oral over-the-counter antihistamine if severe itching persists."
-          ]
-        }
+            'Immediately discontinue use of new skincare products, detergents, or metallic jewelry in the area.',
+            'Apply over-the-counter 1% hydrocortisone cream and cool compresses to soothe inflammation.',
+            'Take an oral over-the-counter antihistamine if severe itching persists.',
+          ],
+        },
       ];
 
       const symptomText = patientData.symptoms.toLowerCase();
       let selectedResult;
-      if (symptomText.includes('clean') || symptomText.includes('smooth') || symptomText.includes('healthy') || symptomText.includes('normal') || symptomText.includes('none')) {
+      if (
+        symptomText.includes('clean') ||
+        symptomText.includes('smooth') ||
+        symptomText.includes('healthy') ||
+        symptomText.includes('normal') ||
+        symptomText.includes('none')
+      ) {
         selectedResult = conditionsList[0];
       } else {
-        selectedResult = conditionsList[Math.floor(Math.random() * conditionsList.length)];
+        selectedResult =
+          conditionsList[Math.floor(Math.random() * conditionsList.length)];
       }
 
       setAnalysisResult(selectedResult);
@@ -212,7 +260,11 @@ export default function App() {
 
       const newScanRecord = {
         id: Date.now(),
-        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+        date: new Date().toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        }),
         patientName: patientData.name,
         age: patientData.age || 'N/A',
         skinType: patientData.skinType,
@@ -221,20 +273,19 @@ export default function App() {
         confidence: selectedResult.confidence,
         urgency: selectedResult.urgency,
         urgencyLabel: selectedResult.urgencyLabel,
-        clinicalDesc: selectedResult.description_clinical
+        clinicalDesc: selectedResult.description_clinical,
       };
 
-      setScanHistory(prev => [newScanRecord, ...prev]);
+      setScanHistory((prev) => [newScanRecord, ...prev]);
     }, 2000);
   };
 
   const deleteScan = (id) => {
-    setScanHistory(prev => prev.filter(item => item.id !== id));
+    setScanHistory((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col font-sans selection:bg-[#0DB8B8] selection:text-[#0F2B5B]">
-      
       {/* Top Navigation Bar */}
       <header className="bg-[#0F2B5B] text-white px-6 py-4 flex flex-col md:flex-row justify-between items-center shadow-lg border-b-4 border-[#0DB8B8] gap-4">
         <div className="flex items-center space-x-3">
@@ -243,12 +294,16 @@ export default function App() {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-xl font-extrabold tracking-tight">DermaScan AI</span>
+              <span className="text-xl font-extrabold tracking-tight">
+                DermaScan AI
+              </span>
               <span className="text-[10px] bg-teal-400/20 text-[#0DB8B8] border border-[#0DB8B8]/40 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {role} Portal
               </span>
             </div>
-            <p className="text-xs text-slate-300 font-medium">Clinical-Grade Skin Assessment & Tracking</p>
+            <p className="text-xs text-slate-300 font-medium">
+              Clinical-Grade Skin Assessment & Tracking
+            </p>
           </div>
         </div>
 
@@ -258,7 +313,9 @@ export default function App() {
             <button
               onClick={() => setActiveTab('scan')}
               className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
-                activeTab === 'scan' ? 'bg-[#0DB8B8] text-[#0F2B5B] shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                activeTab === 'scan'
+                  ? 'bg-[#0DB8B8] text-[#0F2B5B] shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
               }`}
             >
               <Camera className="w-4 h-4" />
@@ -267,7 +324,9 @@ export default function App() {
             <button
               onClick={() => setActiveTab('history')}
               className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
-                activeTab === 'history' ? 'bg-[#0DB8B8] text-[#0F2B5B] shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                activeTab === 'history'
+                  ? 'bg-[#0DB8B8] text-[#0F2B5B] shadow-sm'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
               }`}
             >
               <History className="w-4 h-4" />
@@ -277,7 +336,9 @@ export default function App() {
               <button
                 onClick={() => setActiveTab('patients')}
                 className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
-                  activeTab === 'patients' ? 'bg-[#0DB8B8] text-[#0F2B5B] shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                  activeTab === 'patients'
+                    ? 'bg-[#0DB8B8] text-[#0F2B5B] shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
                 }`}
               >
                 <Users className="w-4 h-4" />
@@ -288,17 +349,24 @@ export default function App() {
 
           {/* Role Toggle Switcher */}
           <div className="flex items-center space-x-2 text-sm bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
-            <span className="text-slate-400 font-medium text-xs uppercase">Role:</span>
+            <span className="text-slate-400 font-medium text-xs uppercase">
+              Role:
+            </span>
             <select
               value={role}
               onChange={(e) => {
                 setRole(e.target.value);
-                if (e.target.value === 'Consumer' && activeTab === 'patients') setActiveTab('scan');
+                if (e.target.value === 'Consumer' && activeTab === 'patients')
+                  setActiveTab('scan');
               }}
               className="bg-transparent text-white font-bold focus:outline-none cursor-pointer text-sm text-[#0DB8B8]"
             >
-              <option value="Consumer" className="bg-slate-800 text-white">Consumer (Self-Care)</option>
-              <option value="Clinician" className="bg-slate-800 text-white">Clinician (Elevated Access)</option>
+              <option value="Consumer" className="bg-slate-800 text-white">
+                Consumer (Self-Care)
+              </option>
+              <option value="Clinician" className="bg-slate-800 text-white">
+                Clinician (Elevated Access)
+              </option>
             </select>
           </div>
         </div>
@@ -306,19 +374,21 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-6">
-        
         {/* VIEW 1: NEW SCAN */}
         {activeTab === 'scan' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
             {/* Step 1 - Patient Intake Form */}
             <div className="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-5">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <h2 className="text-lg font-bold text-[#0F2B5B] flex items-center gap-2.5">
-                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#0F2B5B] text-white text-xs font-bold">1</span>
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#0F2B5B] text-white text-xs font-bold">
+                    1
+                  </span>
                   Patient Profile & Symptoms
                 </h2>
-                <span className="text-xs text-slate-400 font-medium">Required Intake</span>
+                <span className="text-xs text-slate-400 font-medium">
+                  Required Intake
+                </span>
               </div>
 
               <div className="space-y-4">
@@ -361,12 +431,24 @@ export default function App() {
                       onChange={handleInputChange}
                       className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0DB8B8]/30 focus:border-[#0DB8B8] transition font-medium text-slate-700"
                     >
-                      <option value="Type I - Pale white, burns easily">Type I - Pale white</option>
-                      <option value="Type II - White, fair, burns often">Type II - Fair white</option>
-                      <option value="Type III - Medium white to olive">Type III - Olive / Medium</option>
-                      <option value="Type IV - Moderate brown, tans well">Type IV - Moderate brown</option>
-                      <option value="Type V - Dark brown, rarely burns">Type V - Dark brown</option>
-                      <option value="Type VI - Deeply pigmented dark brown to black">Type VI - Deeply pigmented</option>
+                      <option value="Type I - Pale white, burns easily">
+                        Type I - Pale white
+                      </option>
+                      <option value="Type II - White, fair, burns often">
+                        Type II - Fair white
+                      </option>
+                      <option value="Type III - Medium white to olive">
+                        Type III - Olive / Medium
+                      </option>
+                      <option value="Type IV - Moderate brown, tans well">
+                        Type IV - Moderate brown
+                      </option>
+                      <option value="Type V - Dark brown, rarely burns">
+                        Type V - Dark brown
+                      </option>
+                      <option value="Type VI - Deeply pigmented dark brown to black">
+                        Type VI - Deeply pigmented
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -388,7 +470,11 @@ export default function App() {
 
                 <div className="bg-teal-50/60 border border-teal-200/80 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-teal-900">
                   <Sparkles className="w-4 h-4 text-[#0DB8B8] flex-shrink-0 mt-0.5" />
-                  <span>Entering accurate patient details helps the AI vision model tailor its clinical severity classification and OTC home care recommendations.</span>
+                  <span>
+                    Entering accurate patient details helps the AI vision model
+                    tailor its clinical severity classification and OTC home
+                    care recommendations.
+                  </span>
                 </div>
               </div>
             </div>
@@ -398,22 +484,36 @@ export default function App() {
               <div>
                 <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
                   <h2 className="text-lg font-bold text-[#0F2B5B] flex items-center gap-2.5">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#0F2B5B] text-white text-xs font-bold">2</span>
+                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#0F2B5B] text-white text-xs font-bold">
+                      2
+                    </span>
                     Upload Skin Target
                   </h2>
-                  <span className="text-xs text-slate-400 font-medium">Image Scan</span>
+                  <span className="text-xs text-slate-400 font-medium">
+                    Image Scan
+                  </span>
                 </div>
 
                 {imagePreview ? (
                   <div className="relative w-full aspect-square bg-slate-900 rounded-2xl overflow-hidden border-2 border-[#0DB8B8] shadow-md mb-4 group flex items-center justify-center">
-                    <img src={imagePreview} alt="Skin target preview" className="object-cover w-full h-full" />
+                    <img
+                      src={imagePreview}
+                      alt="Skin target preview"
+                      className="object-cover w-full h-full"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                      <p className="text-white text-xs font-medium truncate mb-2">{imageName}</p>
+                      <p className="text-white text-xs font-medium truncate mb-2">
+                        {imageName}
+                      </p>
                       <button
-                        onClick={() => { setImagePreview(null); setAnalysisResult(null); }}
+                        onClick={() => {
+                          setImagePreview(null);
+                          setAnalysisResult(null);
+                        }}
                         className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 rounded-lg transition shadow flex items-center justify-center gap-1.5"
                       >
-                        <Trash2 className="w-3.5 h-3.5" /> Remove & Upload Another
+                        <Trash2 className="w-3.5 h-3.5" /> Remove & Upload
+                        Another
                       </button>
                     </div>
                   </div>
@@ -422,9 +522,19 @@ export default function App() {
                     <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 group-hover:scale-110 group-hover:border-teal-200 transition duration-300 mb-3">
                       <Upload className="w-8 h-8 text-[#0DB8B8]" />
                     </div>
-                    <span className="text-sm font-bold text-slate-700 group-hover:text-[#0F2B5B] transition">Click or Tap to Upload Photo</span>
-                    <span className="text-xs text-slate-400 mt-1 max-w-[200px]">Supports close-up smartphone photos, dermoscopy scans, or PNG/JPG files</span>
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    <span className="text-sm font-bold text-slate-700 group-hover:text-[#0F2B5B] transition">
+                      Click or Tap to Upload Photo
+                    </span>
+                    <span className="text-xs text-slate-400 mt-1 max-w-[200px]">
+                      Supports close-up smartphone photos, dermoscopy scans, or
+                      PNG/JPG files
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
                   </label>
                 )}
               </div>
@@ -457,17 +567,27 @@ export default function App() {
               <div>
                 <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
                   <h2 className="text-lg font-bold text-[#0F2B5B] flex items-center gap-2.5">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#0DB8B8] text-[#0F2B5B] text-xs font-extrabold">3</span>
+                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#0DB8B8] text-[#0F2B5B] text-xs font-extrabold">
+                      3
+                    </span>
                     Diagnostic Report
                   </h2>
-                  <span className="text-xs text-slate-400 font-medium">JSON Output</span>
+                  <span className="text-xs text-slate-400 font-medium">
+                    JSON Output
+                  </span>
                 </div>
 
                 {!analysisResult && !isAnalyzing && (
                   <div className="h-80 flex flex-col items-center justify-center text-center text-slate-400 my-auto p-4 border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/50">
                     <Activity className="w-12 h-12 stroke-1 mb-3 text-slate-300 animate-pulse" />
-                    <p className="text-sm font-semibold text-slate-600">Awaiting Target Upload</p>
-                    <p className="text-xs text-slate-400 mt-1">Complete patient profile and run scan to view confidence level, OTC treatment advice, and ABCDE cancer warning flags.</p>
+                    <p className="text-sm font-semibold text-slate-600">
+                      Awaiting Target Upload
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Complete patient profile and run scan to view confidence
+                      level, OTC treatment advice, and ABCDE cancer warning
+                      flags.
+                    </p>
                   </div>
                 )}
 
@@ -479,8 +599,13 @@ export default function App() {
                       <Sparkles className="w-6 h-6 text-[#0F2B5B] animate-pulse" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-[#0F2B5B]">Live GenAI Vision Processing...</p>
-                      <p className="text-xs text-slate-400 mt-1">Evaluating epidermal regularity, lesion borders, and color patterns...</p>
+                      <p className="text-sm font-bold text-[#0F2B5B]">
+                        Live GenAI Vision Processing...
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Evaluating epidermal regularity, lesion borders, and
+                        color patterns...
+                      </p>
                     </div>
                   </div>
                 )}
@@ -489,39 +614,60 @@ export default function App() {
                   <div className="space-y-4 animate-fadeIn">
                     <div className="bg-slate-800 text-slate-300 px-3 py-1 rounded-lg text-[10px] font-mono flex justify-between items-center border border-slate-700">
                       <span>ENGINE USED:</span>
-                      <span className="text-[#0DB8B8] font-bold">{aiModeUsed}</span>
+                      <span className="text-[#0DB8B8] font-bold">
+                        {aiModeUsed}
+                      </span>
                     </div>
 
                     <div className="flex justify-between items-start bg-teal-50/60 p-4 rounded-xl border border-teal-200/80 shadow-sm">
                       <div>
-                        <span className="text-[10px] text-teal-800 font-bold uppercase tracking-wider block">Suspected Condition</span>
-                        <h3 className="text-base font-black text-[#0F2B5B] leading-snug mt-0.5">{analysisResult.condition}</h3>
+                        <span className="text-[10px] text-teal-800 font-bold uppercase tracking-wider block">
+                          Suspected Condition
+                        </span>
+                        <h3 className="text-base font-black text-[#0F2B5B] leading-snug mt-0.5">
+                          {analysisResult.condition}
+                        </h3>
                       </div>
                       <div className="text-right flex-shrink-0 ml-2">
-                        <span className="text-[10px] text-teal-800 font-bold uppercase tracking-wider block">Confidence</span>
+                        <span className="text-[10px] text-teal-800 font-bold uppercase tracking-wider block">
+                          Confidence
+                        </span>
                         <div className="text-lg font-black text-[#0DB8B8] bg-[#0F2B5B] px-2.5 py-0.5 rounded-lg inline-block mt-0.5">
                           {analysisResult.confidence}%
                         </div>
                       </div>
                     </div>
 
-                    <div className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold border shadow-sm ${
-                      analysisResult.urgency === 'Red' ? 'bg-red-50 border-red-200 text-red-800 animate-pulse' :
-                      analysisResult.urgency === 'Orange' ? 'bg-orange-50 border-orange-200 text-orange-800' :
-                      analysisResult.urgency === 'Yellow' ? 'bg-amber-50 border-amber-200 text-amber-800' :
-                      'bg-emerald-50 border-emerald-200 text-emerald-800'
-                    }`}>
+                    <div
+                      className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold border shadow-sm ${
+                        analysisResult.urgency === 'Red'
+                          ? 'bg-red-50 border-red-200 text-red-800 animate-pulse'
+                          : analysisResult.urgency === 'Orange'
+                          ? 'bg-orange-50 border-orange-200 text-orange-800'
+                          : analysisResult.urgency === 'Yellow'
+                          ? 'bg-amber-50 border-amber-200 text-amber-800'
+                          : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      }`}
+                    >
                       <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                       <span>Urgency: {analysisResult.urgencyLabel}</span>
                     </div>
 
                     <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed space-y-1">
                       <span className="font-bold text-[#0F2B5B] uppercase tracking-wider text-[10px] block border-b border-slate-200 pb-1 mb-1.5 flex items-center justify-between">
-                        <span>{role === 'Clinician' ? 'Clinical Medical Terminology' : 'Plain-Language Explanation'}</span>
-                        <span className="text-[#0DB8B8] font-semibold">{role} View</span>
+                        <span>
+                          {role === 'Clinician'
+                            ? 'Clinical Medical Terminology'
+                            : 'Plain-Language Explanation'}
+                        </span>
+                        <span className="text-[#0DB8B8] font-semibold">
+                          {role} View
+                        </span>
                       </span>
                       <p className="text-slate-700 font-medium">
-                        {role === 'Clinician' ? analysisResult.description_clinical : analysisResult.description_consumer}
+                        {role === 'Clinician'
+                          ? analysisResult.description_clinical
+                          : analysisResult.description_consumer}
                       </p>
                     </div>
 
@@ -530,12 +676,16 @@ export default function App() {
                         Recommended Home Care & Actions
                       </span>
                       <ul className="space-y-2 text-xs text-slate-600">
-                        {analysisResult.recommendations && analysisResult.recommendations.map((rec, index) => (
-                          <li key={index} className="flex items-start gap-2 bg-slate-50/80 p-2 rounded-lg border border-slate-100 font-medium">
-                            <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                            <span>{rec}</span>
-                          </li>
-                        ))}
+                        {analysisResult.recommendations &&
+                          analysisResult.recommendations.map((rec, index) => (
+                            <li
+                              key={index}
+                              className="flex items-start gap-2 bg-slate-50/80 p-2 rounded-lg border border-slate-100 font-medium"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                              <span>{rec}</span>
+                            </li>
+                          ))}
                       </ul>
                     </div>
                   </div>
@@ -545,11 +695,16 @@ export default function App() {
               <div className="mt-6 bg-slate-900 text-slate-300 p-3.5 rounded-xl border-l-4 border-l-amber-500 flex items-start gap-3 text-[11px] shadow-inner">
                 <ShieldAlert className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  <strong className="text-white uppercase tracking-wider block mb-0.5">Medical Disclaimer:</strong> This AI assessment is for informational purposes only and is not a substitute for professional medical diagnosis. Always consult a qualified healthcare provider for proper evaluation and treatment.
+                  <strong className="text-white uppercase tracking-wider block mb-0.5">
+                    Medical Disclaimer:
+                  </strong>{' '}
+                  This AI assessment is for informational purposes only and is
+                  not a substitute for professional medical diagnosis. Always
+                  consult a qualified healthcare provider for proper evaluation
+                  and treatment.
                 </p>
               </div>
             </div>
-
           </div>
         )}
 
@@ -562,9 +717,12 @@ export default function App() {
                   <History className="w-6 h-6 text-[#0DB8B8]" />
                   Saved Diagnostic Journal
                 </h2>
-                <p className="text-xs text-slate-500 mt-1">Longitudinal tracking of patient skin conditions and AI confidence metrics.</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Longitudinal tracking of patient skin conditions and AI
+                  confidence metrics.
+                </p>
               </div>
-              <button 
+              <button
                 onClick={() => setActiveTab('scan')}
                 className="bg-[#0F2B5B] hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2"
               >
@@ -575,8 +733,13 @@ export default function App() {
             {scanHistory.length === 0 ? (
               <div className="text-center py-16 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 p-8">
                 <Activity className="w-12 h-12 text-slate-300 mx-auto mb-3 stroke-1" />
-                <h3 className="text-base font-bold text-slate-700">No Patient Scans Recorded Yet</h3>
-                <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-6">Conduct your first AI assessment in the New Scan tab to automatically generate longitudinal patient logs here.</p>
+                <h3 className="text-base font-bold text-slate-700">
+                  No Patient Scans Recorded Yet
+                </h3>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-6">
+                  Conduct your first AI assessment in the New Scan tab to
+                  automatically generate longitudinal patient logs here.
+                </p>
                 <button
                   onClick={() => setActiveTab('scan')}
                   className="bg-[#0DB8B8] hover:bg-teal-600 text-[#0F2B5B] text-xs font-extrabold px-5 py-2.5 rounded-xl transition shadow-sm inline-flex items-center gap-2"
@@ -595,31 +758,51 @@ export default function App() {
                       <th className="p-3.5 font-bold">Condition Detected</th>
                       <th className="p-3.5 font-bold">Confidence</th>
                       <th className="p-3.5 font-bold">Urgency Status</th>
-                      <th className="p-3.5 rounded-r-xl font-bold text-right">Actions</th>
+                      <th className="p-3.5 rounded-r-xl font-bold text-right">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs">
                     {scanHistory.map((scan) => (
-                      <tr key={scan.id} className="hover:bg-teal-50/30 transition">
-                        <td className="p-3.5 font-bold text-slate-700 whitespace-nowrap">{scan.date}</td>
-                        <td className="p-3.5">
-                          <div className="font-bold text-[#0F2B5B] text-sm">{scan.patientName}</div>
-                          <div className="text-[11px] text-slate-400 font-medium">Age: {scan.age} • {scan.skinType.split('-')[0]}</div>
+                      <tr
+                        key={scan.id}
+                        className="hover:bg-teal-50/30 transition"
+                      >
+                        <td className="p-3.5 font-bold text-slate-700 whitespace-nowrap">
+                          {scan.date}
                         </td>
-                        <td className="p-3.5 text-slate-600 max-w-xs truncate font-medium">{scan.symptoms}</td>
-                        <td className="p-3.5 font-bold text-[#0F2B5B] text-sm">{scan.condition}</td>
+                        <td className="p-3.5">
+                          <div className="font-bold text-[#0F2B5B] text-sm">
+                            {scan.patientName}
+                          </div>
+                          <div className="text-[11px] text-slate-400 font-medium">
+                            Age: {scan.age} • {scan.skinType.split('-')[0]}
+                          </div>
+                        </td>
+                        <td className="p-3.5 text-slate-600 max-w-xs truncate font-medium">
+                          {scan.symptoms}
+                        </td>
+                        <td className="p-3.5 font-bold text-[#0F2B5B] text-sm">
+                          {scan.condition}
+                        </td>
                         <td className="p-3.5">
                           <span className="bg-[#0F2B5B] text-[#0DB8B8] font-black px-2.5 py-1 rounded-lg text-xs shadow-inner">
                             {scan.confidence}%
                           </span>
                         </td>
                         <td className="p-3.5">
-                          <span className={`px-2.5 py-1 rounded-lg font-bold text-[11px] border ${
-                            scan.urgency === 'Red' ? 'bg-red-50 text-red-700 border-red-200' :
-                            scan.urgency === 'Orange' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                            scan.urgency === 'Yellow' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                            'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          }`}>
+                          <span
+                            className={`px-2.5 py-1 rounded-lg font-bold text-[11px] border ${
+                              scan.urgency === 'Red'
+                                ? 'bg-red-50 text-red-700 border-red-200'
+                                : scan.urgency === 'Orange'
+                                ? 'bg-orange-50 text-orange-700 border-orange-200'
+                                : scan.urgency === 'Yellow'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}
+                          >
                             {scan.urgencyLabel.split('/')[0]}
                           </span>
                         </td>
@@ -650,11 +833,20 @@ export default function App() {
                   <Users className="w-6 h-6 text-[#0DB8B8]" />
                   Clinician Patient Management Dashboard
                 </h2>
-                <p className="text-xs text-slate-500 mt-1">Elevated administrative access for tracking longitudinal patient case studies.</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Elevated administrative access for tracking longitudinal
+                  patient case studies.
+                </p>
               </div>
-              <button 
+              <button
                 onClick={() => {
-                  setPatientData({ name: '', age: '', skinType: 'Type III - Medium white to olive', symptoms: '', notes: '' });
+                  setPatientData({
+                    name: '',
+                    age: '',
+                    skinType: 'Type III - Medium white to olive',
+                    symptoms: '',
+                    notes: '',
+                  });
                   setActiveTab('scan');
                 }}
                 className="bg-[#0DB8B8] hover:bg-teal-600 text-[#0F2B5B] text-xs font-black px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5"
@@ -666,32 +858,55 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {scanHistory.length > 0 ? (
                 scanHistory.map((patient, idx) => (
-                  <div key={idx} className="border-2 border-slate-100 p-5 rounded-2xl bg-slate-50/60 hover:border-teal-300 transition flex flex-col justify-between space-y-4 shadow-sm">
+                  <div
+                    key={idx}
+                    className="border-2 border-slate-100 p-5 rounded-2xl bg-slate-50/60 hover:border-teal-300 transition flex flex-col justify-between space-y-4 shadow-sm"
+                  >
                     <div>
                       <div className="flex justify-between items-start mb-2">
-                        <div className="font-extrabold text-[#0F2B5B] text-base">{patient.patientName}</div>
-                        <span className="text-[10px] bg-slate-900 text-[#0DB8B8] px-2 py-0.5 rounded font-bold">ID: #{400 + idx}</span>
+                        <div className="font-extrabold text-[#0F2B5B] text-base">
+                          {patient.patientName}
+                        </div>
+                        <span className="text-[10px] bg-slate-900 text-[#0DB8B8] px-2 py-0.5 rounded font-bold">
+                          ID: #{400 + idx}
+                        </span>
                       </div>
                       <div className="text-xs text-slate-500 font-medium mb-3">
-                        Age: {patient.age} yrs • {patient.skinType.split('-')[0]}
+                        Age: {patient.age} yrs •{' '}
+                        {patient.skinType.split('-')[0]}
                       </div>
                       <div className="text-xs bg-white p-3 rounded-xl border border-slate-200/80 text-slate-700 space-y-1 shadow-inner">
-                        <span className="font-bold text-[#0F2B5B] block text-[10px] uppercase">Latest Symptoms Logged:</span>
-                        <p className="italic text-slate-600">"{patient.symptoms}"</p>
+                        <span className="font-bold text-[#0F2B5B] block text-[10px] uppercase">
+                          Latest Symptoms Logged:
+                        </span>
+                        <p className="italic text-slate-600">
+                          "{patient.symptoms}"
+                        </p>
                         <div className="pt-2 border-t border-slate-100 mt-2 flex justify-between items-center text-[11px]">
-                          <span className="font-bold text-slate-500">Last Diagnosis:</span>
-                          <span className="font-extrabold text-[#0F2B5B]">{patient.condition.split('(')[0]}</span>
+                          <span className="font-bold text-slate-500">
+                            Last Diagnosis:
+                          </span>
+                          <span className="font-extrabold text-[#0F2B5B]">
+                            {patient.condition.split('(')[0]}
+                          </span>
                         </div>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => {
-                        setPatientData({ name: patient.patientName, age: patient.age, skinType: patient.skinType, symptoms: patient.symptoms, notes: '' });
+                        setPatientData({
+                          name: patient.patientName,
+                          age: patient.age,
+                          skinType: patient.skinType,
+                          symptoms: patient.symptoms,
+                          notes: '',
+                        });
                         setActiveTab('scan');
                       }}
                       className="w-full bg-[#0F2B5B] hover:bg-slate-800 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5"
                     >
-                      Initiate Linked Follow-up Scan <ArrowRight className="w-3.5 h-3.5 text-[#0DB8B8]" />
+                      Initiate Linked Follow-up Scan{' '}
+                      <ArrowRight className="w-3.5 h-3.5 text-[#0DB8B8]" />
                     </button>
                   </div>
                 ))
@@ -699,34 +914,56 @@ export default function App() {
                 <div className="border-2 border-slate-100 p-5 rounded-2xl bg-slate-50/60 flex flex-col justify-between space-y-4 shadow-sm">
                   <div>
                     <div className="flex justify-between items-start mb-2">
-                      <div className="font-extrabold text-[#0F2B5B] text-base">Okeowo James</div>
-                      <span className="text-[10px] bg-slate-900 text-[#0DB8B8] px-2 py-0.5 rounded font-bold">ID: #401</span>
+                      <div className="font-extrabold text-[#0F2B5B] text-base">
+                        Okeowo James
+                      </div>
+                      <span className="text-[10px] bg-slate-900 text-[#0DB8B8] px-2 py-0.5 rounded font-bold">
+                        ID: #401
+                      </span>
                     </div>
-                    <div className="text-xs text-slate-500 font-medium mb-3">Age: 23 yrs • Type V - Dark brown</div>
+                    <div className="text-xs text-slate-500 font-medium mb-3">
+                      Age: 23 yrs • Type V - Dark brown
+                    </div>
                     <div className="text-xs bg-white p-3 rounded-xl border border-slate-200/80 text-slate-700 space-y-1 shadow-inner">
-                      <span className="font-bold text-[#0F2B5B] block text-[10px] uppercase">Case Study Notes:</span>
-                      <p className="italic text-slate-600">"Patient reported localized contact dermatitis after field exposure during engineering assembly."</p>
+                      <span className="font-bold text-[#0F2B5B] block text-[10px] uppercase">
+                        Case Study Notes:
+                      </span>
+                      <p className="italic text-slate-600">
+                        "Patient reported localized contact dermatitis after
+                        field exposure during engineering assembly."
+                      </p>
                       <div className="pt-2 border-t border-slate-100 mt-2 flex justify-between items-center text-[11px]">
-                        <span className="font-bold text-slate-500">Status:</span>
-                        <span className="font-extrabold text-emerald-600">Resolved (OTC Care)</span>
+                        <span className="font-bold text-slate-500">
+                          Status:
+                        </span>
+                        <span className="font-extrabold text-emerald-600">
+                          Resolved (OTC Care)
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
-                      setPatientData({ name: 'Okeowo James', age: '23', skinType: 'Type V - Dark brown, rarely burns', symptoms: 'Localized contact dermatitis after field exposure.', notes: '' });
+                      setPatientData({
+                        name: 'Okeowo James',
+                        age: '23',
+                        skinType: 'Type V - Dark brown, rarely burns',
+                        symptoms:
+                          'Localized contact dermatitis after field exposure.',
+                        notes: '',
+                      });
                       setActiveTab('scan');
                     }}
                     className="w-full bg-[#0DB8B8] hover:bg-teal-600 text-[#0F2B5B] text-xs font-black py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5"
                   >
-                    Initiate Follow-up Scan <ArrowRight className="w-3.5 h-3.5" />
+                    Initiate Follow-up Scan{' '}
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
             </div>
           </div>
         )}
-
       </main>
     </div>
   );
